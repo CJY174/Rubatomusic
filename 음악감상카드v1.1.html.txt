@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>카드 선택 게임</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    .word-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .word-box {
+      padding: 20px;
+      border: none;
+      cursor: pointer;
+      width: 120px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      color: white;
+    }
+    .word-box:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    #selected-boxes {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    .selected-box {
+      padding: 20px;
+      border: 2px solid #555;
+      width: 140px;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #ecf0f1;
+      transition: background-color 0.3s, transform 0.2s;
+    }
+    .selected-box.filled {
+      background: #2ecc71;
+      color: white;
+    }
+    .selected-box:hover {
+      transform: scale(1.05);
+    }
+    .nav-buttons {
+      margin-top: 20px;
+    }
+    .nav-buttons button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    .nav-buttons button:hover {
+      background: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2 id="page-title">느낌을 선택하세요!</h2>
+    <div class="word-container" id="word-container"></div>
+    <div id="selected-boxes">
+      <div class="selected-box" onclick="clearSelection(0)">박스 1</div>
+      <div class="selected-box" onclick="clearSelection(1)">박스 2</div>
+      <div class="selected-box" onclick="clearSelection(2)">박스 3</div>
+    </div>
+    <div class="nav-buttons">
+      <button onclick="prevPage()">이전</button>
+      <button onclick="nextPage()">다음</button>
+    </div>
+  </div>
+  <script>
+    const pages = [
+      { title: "느낌을 선택하세요!", words: ["경쾌한", "가벼운", "웅장한", "평화로운", "초조한", "무서운", "가라앉은", "행복한", "강렬한", "벅찬", "놀란", "기쁜", "신비로운", 
+                                     "단순한", "설레는", "편안한", "화려한","우울한","밝은","불안한","힘찬","열정적인","따뜻한","재미있는","무거운","즐거운","긴장된","신나는","차가운"
+                                    ,"감동적인","자연적인","활동적인","차분한","아기자기한","슬픈","친근한","혼란스러운","희망적인"] },
+      { title: "가락을 선택하세요!", words: ["차례가는","뛰어가는","반복되는","단순한","복잡한","높은","낮은"] },
+      { title: "리듬을 선택하세요!", words: ["당김음","부점","셋잇단","2박자","3박자","4박자","4박자","6박자","짧은 음","긴 음"] },
+      { title: "음색을 선택하세요!", words: ["현악기","목관악기","금관악기","유율타악기","무율타악기","건반악기","목소리"] },
+      { title: "빠르기를 선택하세요!", words: ["매우 느린","느린","조금 느린","보통 빠르기","조금 빠른","빠른","매우 빠른","점점 느린","점점 빠른"] },
+      { title: "셈여림을 선택하세요!", words: ["매우 여린","여린","조금 여린","조금 센","센","매우 센", "점점 여린","점점 센"] }
+    ];
+    let currentPage = 0;
+    let selections = Array.from({ length: pages.length }, () => []);
+    
+    function renderPage() {
+  document.getElementById("page-title").innerText = pages[currentPage].title;
+  const container = document.getElementById("word-container");
+  container.innerHTML = "";  // 이전 페이지의 내용 초기화
+
+  // 색깔을 설정하는 배열
+  const colors = ["#ff69b4", "#e74c3c", "#f39c12", "#f1c40f", "#2ecc71", "#3498db"];
+
+  // 각 페이지에 맞는 색상 설정
+  const currentColor = colors[currentPage];
+
+  // 각 단어를 렌더링
+  pages[currentPage].words.forEach(word => {
+    const div = document.createElement("div");
+    div.classList.add("word-box");
+    div.innerText = word;
+    div.onclick = () => selectWord(word);
+    div.style.backgroundColor = currentColor;
+    container.appendChild(div);
+  });
+  
+  updateSelectedBoxes();
+}
+
+function updateSelectedBoxes() {
+  // 선택된 박스를 업데이트하는 부분
+  document.querySelectorAll(".selected-box").forEach((box, index) => {
+    box.innerText = selections[currentPage][index] || `박스 ${index + 1}`;
+    box.classList.toggle("filled", !!selections[currentPage][index]);
+  });
+}
+
+function selectWord(word) {
+  // 선택된 단어를 추가하거나 제거하는 로직
+  if (selections[currentPage].includes(word)) {
+    selections[currentPage] = selections[currentPage].filter(w => w !== word);
+  } else if (selections[currentPage].length < 3) {
+    selections[currentPage].push(word);
+  }
+  updateSelectedBoxes();
+}
+
+function clearSelection(index) {
+  selections[currentPage].splice(index, 1);
+  updateSelectedBoxes();
+}
+
+function nextPage() {
+  // 다음 페이지로 넘어갈 때
+  if (currentPage < pages.length - 1) {
+    currentPage++;
+    renderPage();
+  } else {
+    showSummary();
+  }
+}
+
+function prevPage() {
+  // 이전 페이지로 돌아갈 때
+  if (currentPage > 0) {
+    currentPage--;
+    renderPage();
+  }
+}
+
+function showSummary() {
+  document.getElementById("page-title").innerText = "선택한 카드 요약";
+  
+  // 선택된 카드를 표 형식으로 표시
+  let tableHTML = `<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+                     <thead>
+                       <tr>
+                         <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">카테고리</th>
+                         <th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">선택된 카드</th>
+                       </tr>
+                     </thead>
+                     <tbody>`;
+
+  // 각 페이지의 선택된 항목을 표로 나열
+  pages.forEach((page, i) => {
+    tableHTML += `<tr>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${page.title}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${selections[i].join(", ") || "선택 없음"}</td>
+                  </tr>`;
+  });
+
+  tableHTML += `</tbody></table>`;
+
+  // 표를 페이지에 추가
+  document.getElementById("word-container").innerHTML = tableHTML;
+  
+  // 선택한 박스를 숨김
+  document.getElementById("selected-boxes").style.display = "none";
+}
+
+
+renderPage();
+
+  </script>
+</body>
+</html>
